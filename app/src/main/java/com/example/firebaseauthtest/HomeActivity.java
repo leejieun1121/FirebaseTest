@@ -7,10 +7,13 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Menu;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.facebook.login.LoginManager;
@@ -20,6 +23,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
@@ -48,6 +52,13 @@ public class HomeActivity extends AppCompatActivity {
     private Button logout;
     private FirebaseStorage storage;
 
+    private ImageView imgContent;
+    private EditText etTitle;
+    private EditText etDescription;
+    private Button btnUpload;
+    private String imagePath;
+    private FirebaseDatabase firebaseDatabase;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -55,6 +66,11 @@ public class HomeActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        imgContent = findViewById(R.id.img_content);
+        etTitle = findViewById(R.id.et_title);
+        etDescription = findViewById(R.id.et_description);
+        btnUpload = findViewById(R.id.btn_upload);
+        firebaseDatabase = FirebaseDatabase.getInstance();
         //권한
         if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.M){
             requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},0);
@@ -92,6 +108,14 @@ public class HomeActivity extends AppCompatActivity {
         tvName.setText(auth.getCurrentUser().getDisplayName());
         tvEmail.setText(auth.getCurrentUser().getEmail());
 
+        btnUpload.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                //사진,타이틀,본문 쓰고 업로드 버튼 누르기
+                upload();
+            }
+        });
+
         navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
             @Override
             public boolean onNavigationItemSelected(@NonNull MenuItem item) {
@@ -103,9 +127,10 @@ public class HomeActivity extends AppCompatActivity {
                     Intent intent = new Intent(HomeActivity.this,MainActivity.class);
                     startActivity(intent);
                 } else if(id == R.id.nav_gallery){
+                    //ACTION_PICK을 사용하면 선택한 이미지를 가져올 수 있다.
                     Intent intent = new Intent(Intent.ACTION_PICK);
+                    //setType -> 인텐트의 MIME 유형 설정, 반환하려는 유형 데이터를 나타냄
                     intent.setType(MediaStore.Images.Media.CONTENT_TYPE);
-
                     startActivityForResult(intent,GALLERY_CODE);
                 }
                 DrawerLayout drawerLayout = findViewById(R.id.drawer_layout);
@@ -132,40 +157,62 @@ public class HomeActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if(requestCode==GALLERY_CODE){
+        if(requestCode==GALLERY_CODE) {
             //이 경로를 알 수 없기 때문에 꼭 getPath 코드로 변환해줘야함
 //            System.out.println(data.getData());
-            System.out.println(getPath(data.getData()));
+//            System.out.println(getPath(data.getData()));
+            //갤러리에서 선택된 사진 하나의 경로
+            imagePath = getPath(data.getData());
+            //파일로 만들어서
+            File f = new File(imagePath);
+            //이미지뷰에 set 해줌
+            imgContent.setImageURI(Uri.fromFile(f));
 
-            StorageReference storageRef = storage.getReferenceFromUrl("gs://fir-authtest-29e5b.appspot.com/");
-            Uri file = Uri.fromFile(new File(getPath(data.getData())));
-            StorageReference riversRef = storageRef.child("images/"+file.getLastPathSegment());
-            UploadTask uploadTask = riversRef.putFile(file);
-
-// Register observers to listen for when the download is done or if it fails
-            uploadTask.addOnFailureListener(new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception exception) {
-                    // Handle unsuccessful uploads
-                }
-            }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                @Override
-                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                    // taskSnapshot.getMetadata() contains file metadata such as size, content-type, etc.
-                    // ...
-                }
-            });
         }
     }
 
+    //경로 변환 코드(api만들어주지 않아서 꼭 써줘야한다고 함)
     public String getPath(Uri uri){
         String[] proj = {MediaStore.Images.Media.DATA};
         CursorLoader cursorLoader = new CursorLoader(this,uri,proj,null,null,null);
         Cursor cursor = cursorLoader.loadInBackground();
         int index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-
         cursor.moveToFirst();
 
         return cursor.getString(index);
     }
+
+
+    //작성된 사진의 경로,타이틀, 본문을 파베디비에 저장하는 함수
+    private void upload(){
+        //선택된 사진은 storage에 업로드 됨
+        StorageReference storageRef = storage.getReferenceFromUrl("gs://fir-authtest-29e5b.appspot.com/");
+        Uri file = Uri.fromFile(new File(imagePath));
+        StorageReference riversRef = storageRef.child("images/"+file.getLastPathSegment());
+        UploadTask uploadTask = riversRef.putFile(file);
+
+// Register observers to listen for when the download is done or if it fails
+        uploadTask.addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception exception) {
+                // Handle unsuccessful uploads
+            }
+        }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                // taskSnapshot.getMetadata() contains file metadata such as size, content-type, etc.
+                // ...
+                //사진 업로드가 성공하면, 타이틀,본문과 함께 데이터 베이스에 저장
+                String downloadUrl = taskSnapshot.getMetadata().getReference().getDownloadUrl().toString();
+                ImageDTO imageDTO = new ImageDTO();
+                imageDTO.imageUrl = downloadUrl;
+                imageDTO.title = etTitle.getText().toString();
+                imageDTO.description = etDescription.getText().toString();
+                imageDTO.uid = auth.getCurrentUser().getUid();
+                imageDTO.userId = auth.getCurrentUser().getEmail();
+                firebaseDatabase.getReference().child("images").setValue(imageDTO);
+            }
+        });
+    }
+
 }
