@@ -15,6 +15,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.facebook.login.LoginManager;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -132,6 +133,8 @@ public class HomeActivity extends AppCompatActivity {
                     //setType -> 인텐트의 MIME 유형 설정, 반환하려는 유형 데이터를 나타냄
                     intent.setType(MediaStore.Images.Media.CONTENT_TYPE);
                     startActivityForResult(intent,GALLERY_CODE);
+                }else if(id == R.id.nav_board){
+                    startActivity(new Intent(HomeActivity.this,BoardActivity.class));
                 }
                 DrawerLayout drawerLayout = findViewById(R.id.drawer_layout);
                 drawerLayout.closeDrawer(GravityCompat.START);
@@ -162,6 +165,7 @@ public class HomeActivity extends AppCompatActivity {
 //            System.out.println(data.getData());
 //            System.out.println(getPath(data.getData()));
             //갤러리에서 선택된 사진 하나의 경로
+            //TODO 갤러리 갔다가 사진 클릭 안했을때 오류남
             imagePath = getPath(data.getData());
             //파일로 만들어서
             File f = new File(imagePath);
@@ -175,7 +179,9 @@ public class HomeActivity extends AppCompatActivity {
     public String getPath(Uri uri){
         String[] proj = {MediaStore.Images.Media.DATA};
         CursorLoader cursorLoader = new CursorLoader(this,uri,proj,null,null,null);
+        //작업자 스레드에서 호출되어 수행
         Cursor cursor = cursorLoader.loadInBackground();
+        //특정 필드 인덱스 값 반환, 존재하지 않을 경우 예외 발생
         int index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
         cursor.moveToFirst();
 
@@ -210,7 +216,10 @@ public class HomeActivity extends AppCompatActivity {
                 imageDTO.description = etDescription.getText().toString();
                 imageDTO.uid = auth.getCurrentUser().getUid();
                 imageDTO.userId = auth.getCurrentUser().getEmail();
-                firebaseDatabase.getReference().child("images").setValue(imageDTO);
+
+                //push!! 안해주면 객체로 안묶이고 string 으로 낱개가 되니까 주의
+                firebaseDatabase.getReference().child("images").push().setValue(imageDTO);
+                Toast.makeText(HomeActivity.this, "작성완료", Toast.LENGTH_SHORT).show();;
             }
         });
     }
