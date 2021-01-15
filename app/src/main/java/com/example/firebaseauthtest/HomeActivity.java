@@ -219,7 +219,7 @@ public class HomeActivity extends AppCompatActivity {
                 imageDTO.description = etDescription.getText().toString();
                 imageDTO.uid = auth.getCurrentUser().getUid();
                 imageDTO.userId = auth.getCurrentUser().getEmail();
-
+                imageDTO.imageName = file.getLastPathSegment();
                 //push!! 안해주면 객체로 안묶이고 string 으로 낱개가 되니까 주의
                 firebaseDatabase.getReference().child("images").push().setValue(imageDTO);
                 Toast.makeText(HomeActivity.this, "작성완료", Toast.LENGTH_SHORT).show();;

@@ -11,8 +11,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -21,6 +24,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.MutableData;
 import com.google.firebase.database.Transaction;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
 
 import org.w3c.dom.Text;
 
@@ -33,6 +37,7 @@ public class BoardActivity extends AppCompatActivity {
     private List<String> uidLists = new ArrayList<>();
     private FirebaseDatabase firebaseDatabase;
     private FirebaseAuth auth;
+    private FirebaseStorage storage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,6 +48,7 @@ public class BoardActivity extends AppCompatActivity {
         recyclerView.setAdapter(boardRecyclerViewAdapter);
         firebaseDatabase = FirebaseDatabase.getInstance();
         auth = FirebaseAuth.getInstance();
+        storage = FirebaseStorage.getInstance();
 
         firebaseDatabase.getReference().child("images").addValueEventListener(new ValueEventListener() {
             //옵저버패턴 Pattern
@@ -107,6 +113,13 @@ public class BoardActivity extends AppCompatActivity {
                 Glide.with(holder.itemView).load(R.drawable.baseline_favorite_border_black_18dp)
                         .into(((CustomViewHolder) holder).imgLike);
             }
+
+            ((CustomViewHolder) holder).imgDelete.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    deleteContent(position);
+                }
+            });
         }
 
         @Override
@@ -149,6 +162,23 @@ public class BoardActivity extends AppCompatActivity {
             });
         }
 
+        private void deleteContent(int position){
+            storage.getReference().child("images").child(list.get(position).imageName).delete().addOnSuccessListener(new OnSuccessListener<Void>() {
+                @Override
+                public void onSuccess(Void aVoid) {
+                    Toast.makeText(BoardActivity.this,"삭제 완료",Toast.LENGTH_SHORT).show();
+                }
+            }).addOnFailureListener(new OnFailureListener(){
+
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    e.printStackTrace();
+                    Toast.makeText(BoardActivity.this,"삭제 실패",Toast.LENGTH_SHORT).show();
+
+                }
+            });
+        }
+
     }
 
     private class CustomViewHolder extends RecyclerView.ViewHolder {
@@ -157,6 +187,7 @@ public class BoardActivity extends AppCompatActivity {
         TextView tvDescription;
         ImageView imgLike;
         TextView tvLikeCount;
+        ImageView imgDelete;
 
         public CustomViewHolder(View view) {
             super(view);
@@ -165,6 +196,7 @@ public class BoardActivity extends AppCompatActivity {
             tvDescription = view.findViewById(R.id.tv_description);
             imgLike = view.findViewById(R.id.img_like);
             tvLikeCount = view.findViewById(R.id.tv_like_count);
+            imgDelete = view.findViewById(R.id.img_delete);
         }
     }
 }
