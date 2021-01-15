@@ -163,7 +163,7 @@ public class HomeActivity extends AppCompatActivity {
         if(requestCode==GALLERY_CODE) {
             //이 경로를 알 수 없기 때문에 꼭 getPath 코드로 변환해줘야함
 //            System.out.println(data.getData());
-//            System.out.println(getPath(data.getData()));
+            Log.d("tag",getPath(data.getData()));
             //갤러리에서 선택된 사진 하나의 경로
             //TODO 갤러리 갔다가 사진 클릭 안했을때 오류남
             imagePath = getPath(data.getData());
@@ -209,8 +209,11 @@ public class HomeActivity extends AppCompatActivity {
                 // taskSnapshot.getMetadata() contains file metadata such as size, content-type, etc.
                 // ...
                 //사진 업로드가 성공하면, 타이틀,본문과 함께 데이터 베이스에 저장
-                String downloadUrl = taskSnapshot.getMetadata().getReference().getDownloadUrl().toString();
+                //com.google.android.gms~~~ 로 시작하는 주소로 저장된다 이건 글라이드로 안뜸 ㅠ
+//                String downloadUrl = taskSnapshot.getMetadata().getReference().getDownloadUrl().toString();
+                String downloadUrl = imagePath;
                 ImageDTO imageDTO = new ImageDTO();
+                Log.d("tagUrl",downloadUrl);
                 imageDTO.imageUrl = downloadUrl;
                 imageDTO.title = etTitle.getText().toString();
                 imageDTO.description = etDescription.getText().toString();

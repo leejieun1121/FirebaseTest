@@ -1,5 +1,8 @@
 package com.example.firebaseauthtest;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class ImageDTO {
 
     public String imageUrl;
@@ -7,6 +10,9 @@ public class ImageDTO {
     public String description;
     public String uid;
     public String userId;
+    public int likeCount = 0;
+    public Map<String, Boolean> imgLike = new HashMap<>();
+
 
 
 }
