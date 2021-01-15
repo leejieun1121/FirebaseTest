@@ -33,7 +33,9 @@ import java.util.List;
 
 public class BoardActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
+    //키
     private List<ImageDTO> list = new ArrayList<>();
+    //value
     private List<String> uidLists = new ArrayList<>();
     private FirebaseDatabase firebaseDatabase;
     private FirebaseAuth auth;
@@ -58,12 +60,12 @@ public class BoardActivity extends AppCompatActivity {
                 list.clear();
                 uidLists.clear();
                 //images의 자식 노드들을 순회함 !
-                for(DataSnapshot dataSnapshot :snapshot.getChildren()){
+                for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
                     //순회한 데이터를 ImageDTO 클래스 형으로 받아옴 !
                     ImageDTO imageDTO = dataSnapshot.getValue(ImageDTO.class);
-                    Log.d("tag",dataSnapshot.getValue().toString());
-                    Log.d("tag",imageDTO.description);
-                    Log.d("tag",imageDTO.imageUrl);
+                    Log.d("tag", dataSnapshot.getValue().toString());
+                    Log.d("tag", imageDTO.description);
+                    Log.d("tag", imageDTO.imageUrl);
                     list.add(imageDTO);
                     uidLists.add(dataSnapshot.getKey());
 
@@ -80,12 +82,12 @@ public class BoardActivity extends AppCompatActivity {
         });
     }
 
-    class BoardRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>{
+    class BoardRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
         @NonNull
         @Override
         public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_board,parent,false);
+            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_board, parent, false);
             return new CustomViewHolder(view);
         }
 
@@ -95,7 +97,7 @@ public class BoardActivity extends AppCompatActivity {
             ((CustomViewHolder) holder).tvDescription.setText(list.get(position).description);
             Glide.with(holder.itemView.getContext()).load(list.get(position).imageUrl)
                     .into(((CustomViewHolder) holder).imgContent);
-            ((CustomViewHolder) holder).tvLikeCount.setText(list.get(position).likeCount+"");
+            ((CustomViewHolder) holder).tvLikeCount.setText(list.get(position).likeCount + "");
 
             ((CustomViewHolder) holder).imgLike.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -109,7 +111,7 @@ public class BoardActivity extends AppCompatActivity {
             if (list.get(position).imgLike.containsKey(auth.getCurrentUser().getUid())) {
                 Glide.with(holder.itemView).load(R.drawable.baseline_favorite_black_18dp)
                         .into(((CustomViewHolder) holder).imgLike);
-            }else{
+            } else {
                 Glide.with(holder.itemView).load(R.drawable.baseline_favorite_border_black_18dp)
                         .into(((CustomViewHolder) holder).imgLike);
             }
@@ -162,21 +164,39 @@ public class BoardActivity extends AppCompatActivity {
             });
         }
 
-        private void deleteContent(int position){
+        private void deleteContent(int position) {
             storage.getReference().child("images").child(list.get(position).imageName).delete().addOnSuccessListener(new OnSuccessListener<Void>() {
                 @Override
                 public void onSuccess(Void aVoid) {
-                    Toast.makeText(BoardActivity.this,"삭제 완료",Toast.LENGTH_SHORT).show();
+                    Toast.makeText(BoardActivity.this,"이미지 삭제 완료",Toast.LENGTH_SHORT).show();
+                    //            firebaseDatabase.getReference().child("images").child("디비 키 값").setValue(null);
+                    //콜백방식 -> 이미지 삭제와 게시물 삭제를 따로 두면 이미지 삭제는 되고 게시물 삭제는 안되는 경우 즉, 꼬일 수 있음
+                    //이미지 삭제 성공하면 게시물 삭제 되도록
+                    firebaseDatabase.getReference().child("images").child(uidLists.get(position)).removeValue().addOnSuccessListener(new OnSuccessListener<Void>() {
+                        @Override
+                        public void onSuccess(Void aVoid) {
+                            Toast.makeText(BoardActivity.this, "게시글 삭제 완료", Toast.LENGTH_SHORT).show();
+
+                        }
+                    }).addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                            Toast.makeText(BoardActivity.this, "게시글 삭제 실패", Toast.LENGTH_SHORT).show();
+
+                        }
+                    });
                 }
             }).addOnFailureListener(new OnFailureListener(){
 
                 @Override
                 public void onFailure(@NonNull Exception e) {
                     e.printStackTrace();
-                    Toast.makeText(BoardActivity.this,"삭제 실패",Toast.LENGTH_SHORT).show();
+                    Toast.makeText(BoardActivity.this,"이미지 삭제 실패",Toast.LENGTH_SHORT).show();
 
                 }
             });
+
+
         }
 
     }
