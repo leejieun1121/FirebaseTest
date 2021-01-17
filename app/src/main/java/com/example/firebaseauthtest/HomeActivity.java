@@ -1,8 +1,10 @@
 package com.example.firebaseauthtest;
 
 import android.Manifest;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -18,20 +20,25 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.facebook.login.LoginManager;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.remoteconfig.FirebaseRemoteConfig;
+import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.view.GravityCompat;
 import androidx.loader.content.CursorLoader;
 import androidx.navigation.NavController;
@@ -62,11 +69,13 @@ public class HomeActivity extends AppCompatActivity {
     private FirebaseDatabase firebaseDatabase;
     private EditText error;
 
+    private Toolbar toolbar;
+    private FirebaseRemoteConfig mFirebaseRemoteConfig;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
-        Toolbar toolbar = findViewById(R.id.toolbar);
+        toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         imgContent = findViewById(R.id.img_content);
@@ -84,10 +93,10 @@ public class HomeActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-//                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-//                        .setAction("Action", null).show();
-                error.setText("error");
+                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+                        .setAction("Action", null).show();
                 //try-catch 사용하면 앱 안터지고 파베로 에러 넘어가게끔 할 수 있음
+//                error.setText("error");
             }
         });
 
@@ -121,6 +130,8 @@ public class HomeActivity extends AppCompatActivity {
             }
         });
 
+        remoteConfig();
+
         navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
             @Override
             public boolean onNavigationItemSelected(@NonNull MenuItem item) {
@@ -145,8 +156,57 @@ public class HomeActivity extends AppCompatActivity {
                 return true;
             }
         });
+
     }
 
+    private void remoteConfig(){
+        mFirebaseRemoteConfig = FirebaseRemoteConfig.getInstance();
+        //디버깅 테스트 할 때 사용 -> 과부하 방지 위해 계속 요청 방지
+        FirebaseRemoteConfigSettings configSettings = new FirebaseRemoteConfigSettings.Builder()
+                //앱 실행마다 요청
+                .setMinimumFetchIntervalInSeconds(0)
+                .build();
+        mFirebaseRemoteConfig.setConfigSettingsAsync(configSettings);
+        //서버에 매칭되는 값이 없을 때 참조
+        mFirebaseRemoteConfig.setDefaultsAsync(R.xml.remote_config_defaults);
+
+        mFirebaseRemoteConfig.fetchAndActivate()
+                .addOnCompleteListener(this, new OnCompleteListener<Boolean>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Boolean> task) {
+                        if (task.isSuccessful()) {
+                            boolean updated = task.getResult();
+                            Log.d("tag", "Config params updated: " + updated);
+                            Toast.makeText(HomeActivity.this, "Fetch and activate succeeded",
+                                    Toast.LENGTH_SHORT).show();
+
+                        } else {
+                            Toast.makeText(HomeActivity.this, "Fetch failed",
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                        displayWelcomeMessage();
+                    }
+                });
+    }
+
+    private void displayWelcomeMessage(){
+        String toolbarColor = mFirebaseRemoteConfig.getString("toolBarColor");
+        Boolean welcomeMessageCaps = mFirebaseRemoteConfig.getBoolean("welcome_message_caps");
+        String welcomeMessage = mFirebaseRemoteConfig.getString("welcome_message");
+
+        toolbar.setBackgroundColor(Color.parseColor(toolbarColor));
+        if(welcomeMessageCaps){
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage(welcomeMessage).setPositiveButton("확인", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    //서버 점검중이면 앱이 꺼져버리게
+                    HomeActivity.this.finish();
+                }
+            });
+            builder.create().show();
+        }
+    }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
