@@ -24,6 +24,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
@@ -59,6 +60,7 @@ public class HomeActivity extends AppCompatActivity {
     private Button btnUpload;
     private String imagePath;
     private FirebaseDatabase firebaseDatabase;
+    private EditText error;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,8 +84,10 @@ public class HomeActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+//                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+//                        .setAction("Action", null).show();
+                error.setText("error");
+                //try-catch 사용하면 앱 안터지고 파베로 에러 넘어가게끔 할 수 있음
             }
         });
 
