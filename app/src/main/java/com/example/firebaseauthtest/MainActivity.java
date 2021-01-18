@@ -4,11 +4,14 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.facebook.AccessToken;
@@ -24,6 +27,8 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.AuthCredential;
@@ -32,6 +37,21 @@ import com.google.firebase.auth.FacebookAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
+import com.google.firebase.dynamiclinks.DynamicLink;
+import com.google.firebase.dynamiclinks.FirebaseDynamicLinks;
+import com.google.firebase.dynamiclinks.PendingDynamicLinkData;
+import com.google.firebase.dynamiclinks.ShortDynamicLink;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 public class MainActivity extends AppCompatActivity {
     private static final int RC_SIGN_IN = 10;
@@ -42,6 +62,8 @@ public class MainActivity extends AppCompatActivity {
     private CallbackManager mCallbackManager;
     private FirebaseAuth.AuthStateListener mAuthListener;
     //로그인했을때 프로세스 실행
+
+    private TextView tvTime;
 
 
     /*
@@ -56,6 +78,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        tvTime = findViewById(R.id.tv_time);
 
         // 구글로그인
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -107,6 +131,9 @@ public class MainActivity extends AppCompatActivity {
                 // ...
             }
         });
+
+        createDynamicLink();
+        receiveDynamicLink();
 
 //        mAuthListener = new FirebaseAuth.AuthStateListener() {
 //            @Override
@@ -277,6 +304,108 @@ public class MainActivity extends AppCompatActivity {
                         // ...
                     }
                 });
+    }
+
+
+    void createDynamicLink(){
+        //에뮬이 아닌 핸드폰에서 실행하면 플레이스토어로 넘어감
+        DynamicLink dynamicLink = FirebaseDynamicLinks.getInstance().createDynamicLink()
+                .setLink(Uri.parse("http://date.jsontest.com"))
+                .setDomainUriPrefix("https://jieun1121.page.link")
+                // Open links with this app on Android
+                .setAndroidParameters(new DynamicLink.AndroidParameters.Builder("com.kakao.talk").build())
+                // Open links with com.example.ios on iOS
+//                .setIosParameters(new DynamicLink.IosParameters.Builder("com.example.ios").build())
+                .buildDynamicLink();
+
+        Uri dynamicLinkUri = dynamicLink.getUri();
+        Log.d("tag_longLink",dynamicLinkUri.toString());
+
+        //생성된 링크가 너무 길어서 짧게 만들어줌
+        Task<ShortDynamicLink> shortLinkTask = FirebaseDynamicLinks.getInstance().createDynamicLink()
+                .setLink(Uri.parse("http://date.jsontest.com"))
+                .setDomainUriPrefix("https://jieun1121.page.link")
+                // Set parameters
+                // ...
+                .buildShortDynamicLink()
+                .addOnCompleteListener(this, new OnCompleteListener<ShortDynamicLink>() {
+                    @Override
+                    public void onComplete(@NonNull Task<ShortDynamicLink> task) {
+                        if (task.isSuccessful()) {
+                            // Short link created
+                            Uri shortLink = task.getResult().getShortLink();
+                            Log.d("tag_shortLink",shortLink.toString());
+
+                            Uri flowchartLink = task.getResult().getPreviewLink();
+                        } else {
+                            // Error
+                            // ...
+                        }
+                    }
+                });
+    }
+
+    private void receiveDynamicLink() {
+        FirebaseDynamicLinks.getInstance()
+                .getDynamicLink(getIntent())
+                .addOnSuccessListener(this, new OnSuccessListener<PendingDynamicLinkData>() {
+                    @Override
+                    public void onSuccess(PendingDynamicLinkData pendingDynamicLinkData) {
+                        // Get deep link from result (may be null if no link is found)
+                        Uri deepLink = null;
+                        //그냥 앱으로 실행시켰을 때
+                        if (pendingDynamicLinkData != null) {
+                            deepLink = pendingDynamicLinkData.getLink();
+                            getTime(deepLink.toString());
+                            Log.d("tag_ReceiveLink", deepLink.toString());
+                        }else{
+                            //링크 타고 들어왔을 때
+                            Log.d("tag_ReceiveLink", "No have DynamicLink");
+
+                        }
+
+                        // Handle the deep link. For example, open the linked
+                        // content, or apply promotional credit to the user's
+                        // account.
+                        // ...
+
+                        // ...
+                    }
+                })
+                .addOnFailureListener(this, new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.w("tag", "getDynamicLink:onFailure", e);
+                    }
+                });
+    }
+
+
+    void getTime(String url){
+        OkHttpClient okHttpClient = new OkHttpClient();
+        okHttpClient.newCall(new Request.Builder().url(url).build()).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                new Handler(getMainLooper()).post(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            JSONObject jsonObject = new JSONObject(response.body().string());
+                            tvTime.setText(jsonObject.getString("time"));
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
+            }
+        });
     }
 
 

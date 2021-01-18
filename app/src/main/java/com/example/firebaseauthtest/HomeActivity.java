@@ -8,6 +8,7 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.MenuItem;
@@ -32,6 +33,7 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.dynamiclinks.DynamicLink;
 import com.google.firebase.dynamiclinks.FirebaseDynamicLinks;
+import com.google.firebase.dynamiclinks.PendingDynamicLinkData;
 import com.google.firebase.dynamiclinks.ShortDynamicLink;
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig;
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings;
@@ -52,7 +54,17 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.File;
+import java.io.IOException;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 public class HomeActivity extends AppCompatActivity {
 
@@ -74,6 +86,8 @@ public class HomeActivity extends AppCompatActivity {
 
     private Toolbar toolbar;
     private FirebaseRemoteConfig mFirebaseRemoteConfig;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -86,6 +100,7 @@ public class HomeActivity extends AppCompatActivity {
         etDescription = findViewById(R.id.et_description);
         btnUpload = findViewById(R.id.btn_upload);
         firebaseDatabase = FirebaseDatabase.getInstance();
+
         //권한
         if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.M){
             requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},0);
@@ -125,6 +140,7 @@ public class HomeActivity extends AppCompatActivity {
         tvName.setText(auth.getCurrentUser().getDisplayName());
         tvEmail.setText(auth.getCurrentUser().getEmail());
 
+
         btnUpload.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -160,44 +176,9 @@ public class HomeActivity extends AppCompatActivity {
             }
         });
 
-        //에뮬이 아닌 핸드폰에서 실행하면 플레이스토어로 넘어감
-        DynamicLink dynamicLink = FirebaseDynamicLinks.getInstance().createDynamicLink()
-                .setLink(Uri.parse("https://www.kakao.com/"))
-                .setDomainUriPrefix("https://jieun1121.page.link")
-                // Open links with this app on Android
-                .setAndroidParameters(new DynamicLink.AndroidParameters.Builder("com.kakao.talk").build())
-                // Open links with com.example.ios on iOS
-//                .setIosParameters(new DynamicLink.IosParameters.Builder("com.example.ios").build())
-                .buildDynamicLink();
 
-        Uri dynamicLinkUri = dynamicLink.getUri();
-        Log.d("tag_dynamicLink_long",dynamicLinkUri.toString());
-
-        //생성된 링크가 너무 길어서 짧게 만들어줌
-        Task<ShortDynamicLink> shortLinkTask = FirebaseDynamicLinks.getInstance().createDynamicLink()
-                .setLink(Uri.parse("https://www.kakao.com/"))
-                .setDomainUriPrefix("https://jieun1121.page.link")
-                // Set parameters
-                // ...
-                .buildShortDynamicLink()
-                .addOnCompleteListener(this, new OnCompleteListener<ShortDynamicLink>() {
-                    @Override
-                    public void onComplete(@NonNull Task<ShortDynamicLink> task) {
-                        if (task.isSuccessful()) {
-                            // Short link created
-                            Uri shortLink = task.getResult().getShortLink();
-                            Log.d("tag_dynamicLink_short",shortLink.toString());
-
-                            Uri flowchartLink = task.getResult().getPreviewLink();
-                        } else {
-                            // Error
-                            // ...
-                        }
-                    }
-                });
 
     }
-
     private void remoteConfig(){
         mFirebaseRemoteConfig = FirebaseRemoteConfig.getInstance();
         //디버깅 테스트 할 때 사용 -> 과부하 방지 위해 계속 요청 방지
@@ -330,5 +311,6 @@ public class HomeActivity extends AppCompatActivity {
             }
         });
     }
+
 
 }
