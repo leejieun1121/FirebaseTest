@@ -106,6 +106,9 @@ dependencies {
     implementation 'com.google.firebase:firebase-dynamic-links'
     implementation 'com.google.firebase:firebase-analytics'
 
+    implementation 'com.google.firebase:firebase-ads:18.0.0'
+
+
 }
 
 apply plugin: 'com.google.gms.google-services'
