@@ -313,7 +313,7 @@ public class MainActivity extends AppCompatActivity {
                 .setLink(Uri.parse("http://date.jsontest.com"))
                 .setDomainUriPrefix("https://jieun1121.page.link")
                 // Open links with this app on Android
-                .setAndroidParameters(new DynamicLink.AndroidParameters.Builder("com.kakao.talk").build())
+                .setAndroidParameters(new DynamicLink.AndroidParameters.Builder("date.jsontest.com").build())
                 // Open links with com.example.ios on iOS
 //                .setIosParameters(new DynamicLink.IosParameters.Builder("com.example.ios").build())
                 .buildDynamicLink();
@@ -357,7 +357,7 @@ public class MainActivity extends AppCompatActivity {
                         if (pendingDynamicLinkData != null) {
                             deepLink = pendingDynamicLinkData.getLink();
                             getTime(deepLink.toString());
-                            Log.d("tag_ReceiveLink", deepLink.toString());
+                            Log.d("tag_receiveLink", deepLink.toString());
                         }else{
                             //링크 타고 들어왔을 때
                             Log.d("tag_ReceiveLink", "No have DynamicLink");
@@ -386,6 +386,7 @@ public class MainActivity extends AppCompatActivity {
         okHttpClient.newCall(new Request.Builder().url(url).build()).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
+                Log.d("tag_time",e.getLocalizedMessage());
 
             }
 
@@ -396,6 +397,7 @@ public class MainActivity extends AppCompatActivity {
                     public void run() {
                         try {
                             JSONObject jsonObject = new JSONObject(response.body().string());
+                            Log.d("tag_time",jsonObject.toString());
                             tvTime.setText(jsonObject.getString("time"));
                         } catch (JSONException e) {
                             e.printStackTrace();
