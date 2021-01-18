@@ -72,7 +72,6 @@ public class MainActivity extends AppCompatActivity {
     //로그인했을때 프로세스 실행
 
     private TextView tvTime;
-    private AdView mAdView;
 
 
     /*
@@ -89,8 +88,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         tvTime = findViewById(R.id.tv_time);
-
-        addBanner();
 
 
         // 구글로그인
@@ -421,52 +418,5 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
-
-    void addBanner(){
-        MobileAds.initialize(this, new OnInitializationCompleteListener() {
-            @Override
-            public void onInitializationComplete(InitializationStatus initializationStatus) {
-            }
-        });
-
-        mAdView = findViewById(R.id.adView);
-        AdRequest adRequest = new AdRequest.Builder().build();
-        mAdView.loadAd(adRequest);
-        //광고 관련 이벤트 처리
-        mAdView.setAdListener(new AdListener() {
-            @Override
-            public void onAdLoaded() { //광고 켜질 때
-                // Code to be executed when an ad finishes loading.
-            }
-
-            @Override
-            public void onAdFailedToLoad(LoadAdError adError) { //광고 로딩 실패
-                // Code to be executed when an ad request fails.
-            }
-
-            @Override
-            public void onAdOpened() { //광고 클릭
-                // Code to be executed when an ad opens an overlay that
-                // covers the screen.
-            }
-
-            @Override
-            public void onAdClicked() {
-                // Code to be executed when the user clicks on an ad.
-            }
-
-            @Override
-            public void onAdLeftApplication() { //앱이 잠시 멈출 때
-                // Code to be executed when the user has left the app.
-            }
-
-            @Override
-            public void onAdClosed() { //광고 닫을 때
-                // Code to be executed when the user is about to return
-                // to the app after tapping on an ad.
-            }
-        });
-    }
-
 
 }

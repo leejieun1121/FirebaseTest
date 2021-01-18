@@ -169,6 +169,9 @@ public class HomeActivity extends AppCompatActivity {
                     startActivityForResult(intent,GALLERY_CODE);
                 }else if(id == R.id.nav_board){
                     startActivity(new Intent(HomeActivity.this,BoardActivity.class));
+                }else if(id == R.id.nav_ad){
+                    startActivity(new Intent(HomeActivity.this,AdActivity.class));
+
                 }
                 DrawerLayout drawerLayout = findViewById(R.id.drawer_layout);
                 drawerLayout.closeDrawer(GravityCompat.START);

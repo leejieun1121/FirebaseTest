@@ -14,6 +14,8 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.FirebaseAuthTest"
         android:usesCleartextTraffic="true">
+        <activity android:name=".AdActivity"></activity>
+
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-3940256099942544~3347511713" />
@@ -26,18 +28,21 @@
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!--동적링크 수신 관련 : 이벤트 발생시키는 곳에 써주기-->
+            <!-- 동적링크 수신 관련 : 이벤트 발생시키는 곳에 써주기 -->
             <!-- host와 생성된 동적링크가 일치하면 앱이 켜진다 -->
             <intent-filter>
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <category android:name="android.intent.category.BROWSABLE"/>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
                 <data
                     android:host="jieun1121.page.link"
-                    android:scheme="https"/>
+                    android:scheme="https" />
             </intent-filter>
         </activity>
 

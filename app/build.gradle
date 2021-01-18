@@ -108,6 +108,9 @@ dependencies {
 
     implementation 'com.google.firebase:firebase-ads:18.0.0'
 
+    implementation project(':nativetemplates')
+
+
 
 }
 
