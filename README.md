@@ -15,7 +15,7 @@
 
 콘솔 들어가서 로그인하려는 기능을 전부 사용 설정 해줘야함 
 
-![스크린샷 2021-01-21 오후 6.47.29](/Users/jieun/Library/Application Support/typora-user-images/스크린샷 2021-01-21 오후 6.47.29.png)
+![스크린샷 2021-01-21 오후 6 47 29](https://user-images.githubusercontent.com/53978090/105385767-0d4d1e00-5c57-11eb-84c9-231fe5594c7f.png)
 
 **<activity_main.xml>**
 
