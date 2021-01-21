@@ -185,13 +185,6 @@ public class MainActivity extends AppCompatActivity {
                             // Sign in success, update UI with the signed-in user's information
                             Log.d("tag", "signInWithEmail:success");
 //                            updateUI(user);
-                        } else {
-                            // If sign in fails, display a message to the user.
-                            Log.w("tag", "signInWithEmail:failure", task.getException());
-                            Toast.makeText(MainActivity.this, "Authentication failed.",
-                                    Toast.LENGTH_SHORT).show();
-//                            updateUI(null);
-                            // ...
                             FirebaseUser user = mAuth.getCurrentUser();
                             if(user != null) {
 
@@ -199,6 +192,14 @@ public class MainActivity extends AppCompatActivity {
                                 startActivity(intent);
                                 finish();
                             }
+                        } else {
+                            // If sign in fails, display a message to the user.
+                            Log.w("tag", "signInWithEmail:failure", task.getException());
+                            Toast.makeText(MainActivity.this, "Authentication failed.",
+                                    Toast.LENGTH_SHORT).show();
+//                            updateUI(null);
+                            // ...
+
                         }
 
                         // ...
